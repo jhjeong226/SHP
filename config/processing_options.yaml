@@ -1,0 +1,26 @@
+corrections:
+  incoming_flux: true   # fi: 입사 우주선 강도 보정
+  pressure:      true   # fp: 기압 보정
+  humidity:      true   # fw: 절대습도 보정
+  biomass:       false  # fb: 바이오매스 보정 (미구현)
+
+calibration:
+  methods: ["standard", "shp_joint", "shp_2pt"]  # 실행할 방법 목록
+  optimization_method: "Nelder-Mead"
+  initial_N0: 1000
+  shp_2pt_percentile: 10   # 건조/습윤 대표값 추출 백분위수
+
+calculation:
+  exclude_months: [11, 12, 1, 2]   # 동절기 제외
+  custom_exclude_dates: []          # ["2024-06-15:2024-06-20"]
+  smoothing:
+    enabled: false
+    window: 11
+    order: 3
+
+visualization:
+  dpi: 150
+  figure_size: [18, 12]
+
+logging:
+  level: "INFO"   # DEBUG / INFO / WARNING

@@ -1,0 +1,45 @@
+station_info:
+  id: "HC"
+  name: "Hongcheon"
+  description: "홍천 산림 관측소"
+
+coordinates:
+  latitude: 37.7049111
+  longitude: 128.0316412
+  altitude: null
+
+soil_properties:
+  bulk_density: 1.44       # g/cm³
+  clay_content: 0.35       # fraction
+  lattice_water: null      # null이면 clay_content로 자동 계산
+
+sensor_configuration:
+  depths: [10, 30, 60]     # cm
+  fdr_sensor_count: 3
+
+data_paths:
+  crnp_folder: "data/input/HC/crnp/"
+  fdr_folder:  "data/input/HC/fdr/"
+
+calibration:
+  neutron_monitor: "MXCO"
+  utc_offset: 9
+  reference_depths: [10, 30, 60]
+  default_start_date: "2024-09-15"
+  default_end_date:   "2024-10-10"
+  weighting_method: "Schron_2017"   # or "Kohli_2015"
+
+sensors:
+  # 각 FDR 센서 위치 정보 (가중평균 계산용)
+  # id, lat, lon, distance_from_station(m), bulk_density(g/cm³)
+  # 예시 - 실제 값으로 교체 필요
+  S1:
+    lat: 37.7049
+    lon: 128.0316
+    distance: 0
+    bulk_density: 1.44
+  S2:
+    lat: 37.7052
+    lon: 128.0320
+    distance: 50
+    bulk_density: 1.44
