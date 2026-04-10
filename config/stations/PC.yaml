@@ -1,20 +1,20 @@
 station_info:
-  id: "HC"
-  name: "Hongcheon"
-  description: "홍천 산림 관측소"
+  id: "PC"
+  name: "Pyeongchang"
+  description: "평창 서울대 관측소"
 
 coordinates:
-  latitude: 37.7049111
-  longitude: 128.0316412
-  altitude: null
+  latitude: 37.53126519
+  longitude: 128.4461
+  altitude: 538.2774741
 
 soil_properties:
-  bulk_density: 1.44       # g/cm³
+  bulk_density: 1.20       # g/cm³
   clay_content: 0.35       # fraction
   lattice_water: null      # null이면 clay_content로 자동 계산
 
 sensor_configuration:
-  depths: [10, 20, 30]     # cm
+  depths: [10, 30, 60]     # cm
   fdr_sensor_count: 3
 
 calibration:

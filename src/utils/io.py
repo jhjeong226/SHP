@@ -54,6 +54,30 @@ def load_json(path: Path) -> Optional[Dict]:
         return json.load(f)
 
 
+def get_station_paths(station_id: str, config_root: str = "config") -> dict:
+    """
+    data_root + station_id 로 표준 경로를 자동 구성.
+
+    구조:
+        {data_root}/{station_id}/raw/crnp/   ← .dat 원시자료
+        {data_root}/{station_id}/raw/fdr/    ← FDR CSV 원시자료
+        {data_root}/{station_id}/processed/  ← 전처리 결과
+
+    Returns
+    -------
+    dict with keys: raw_crnp, raw_fdr, processed
+    """
+    cfg = load_config(station_id, config_root)
+    data_root = Path(cfg["options"].get("data_root", "data"))
+    base = data_root / station_id
+
+    return {
+        "raw_crnp":  base / "raw" / "crnp",
+        "raw_fdr":   base / "raw" / "fdr",
+        "processed": base / "processed",
+    }
+
+
 def save_excel(df: pd.DataFrame, path: Path, index: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_excel(path, index=index, engine="openpyxl")

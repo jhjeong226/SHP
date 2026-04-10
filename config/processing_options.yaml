@@ -1,3 +1,9 @@
+# 데이터 루트 경로 — 여기만 바꾸면 모든 관측소에 적용됨
+# 하위 구조: {data_root}/{station_id}/raw/crnp/
+#                                      raw/fdr/
+#                                      processed/
+data_root: "E:/02.Data/05.CRNP/03.SHP_Calibration/SHP/data"
+
 corrections:
   incoming_flux: true   # fi: 입사 우주선 강도 보정
   pressure:      true   # fp: 기압 보정
