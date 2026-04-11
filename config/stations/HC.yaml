@@ -1,38 +1,102 @@
 station_info:
-  id: "HC"
-  name: "Hongcheon"
-  description: "홍천 산림 관측소"
-
+  id: HC
+  name: Hongcheon Station
+  description: 홍천 CRNP 관측소
+  operator: KIHS
 coordinates:
   latitude: 37.7049111
   longitude: 128.0316412
-  altitude: null
-
+  altitude: 444.3027
 soil_properties:
-  bulk_density: 1.44       # g/cm³
-  clay_content: 0.35       # fraction
-  lattice_water: null      # null이면 clay_content로 자동 계산
-
+  bulk_density: 1.44
+  clay_content: 0.35
+  lattice_water: null
 sensor_configuration:
-  depths: [10, 20, 30]     # cm
-  fdr_sensor_count: 3
-
+  depths:
+  - 10
+  - 20
+  - 30
+  total_sensors: 12
 calibration:
-  neutron_monitor: "MXCO"
+  neutron_monitor: MXCO
   utc_offset: 9
-  reference_depths: [10, 30, 60]
-  default_start_date: "2024-09-15"
-  default_end_date:   "2024-10-10"
-  weighting_method: "Schron_2017"
-
+  reference_depths:
+  - 10
+  - 20
+  - 30
+  default_start_date: '2024-09-15'
+  default_end_date: '2024-10-10'
+  weighting_method: Schron_2017
 sensors:
+  E1:
+    logger_id: z6-19850
+    lat: 37.705095
+    lon: 128.031827
+    distance: 26
+    bulk_density: 1.44
+  E2:
+    logger_id: z6-19846
+    lat: 37.705243
+    lon: 128.032208
+    distance: 62
+    bulk_density: 1.44
+  E3:
+    logger_id: z6-19853
+    lat: 37.705527
+    lon: 128.032452
+    distance: 99
+    bulk_density: 1.44
+  E4:
+    logger_id: z6-19843
+    lat: 37.705797
+    lon: 128.032682
+    distance: 135
+    bulk_density: 1.44
+  N1:
+    logger_id: z6-05589
+    lat: 37.705723
+    lon: 128.031175
+    distance: 99
+    bulk_density: 1.44
+  N2:
+    logger_id: z6-19848
+    lat: 37.705849
+    lon: 128.030982
+    distance: 119
+    bulk_density: 1.44
+  W1:
+    logger_id: z6-19852
+    lat: 37.704954
+    lon: 128.031102
+    distance: 48
+    bulk_density: 1.44
+  W2:
+    logger_id: z6-19851
+    lat: 37.704848
+    lon: 128.030916
+    distance: 65
+    bulk_density: 1.44
   S1:
-    lat: 37.7049
-    lon: 128.0316
-    distance: 0
+    logger_id: z6-19854
+    lat: 37.704633
+    lon: 128.031398
+    distance: 37
     bulk_density: 1.44
   S2:
-    lat: 37.7052
-    lon: 128.0320
-    distance: 50
+    logger_id: z6-19847
+    lat: 37.704295
+    lon: 128.031615
+    distance: 68
+    bulk_density: 1.44
+  S3:
+    logger_id: z6-19903
+    lat: 37.704037
+    lon: 128.031937
+    distance: 100
+    bulk_density: 1.44
+  S4:
+    logger_id: z6-19845
+    lat: 37.70389
+    lon: 128.03169
+    distance: 113
     bulk_density: 1.44

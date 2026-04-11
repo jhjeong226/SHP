@@ -1,0 +1,4 @@
+﻿z6-05589,,Port1,Port1,Port2,Port3,Port3,Port7,Port7,Port8,Port8, 
+# Records: 1,,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,Unrecognized Sensor,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,Battery,Battery,Barometer,Barometer, 
+Timestamps,Device RID,raw  Water Content,raw  Soil Temperature,raw  Sensor Output,raw  Water Content,raw  Soil Temperature,raw  Battery Percent,raw  Battery Voltage,raw  Reference Pressure,raw  Logger Temperature,UTC Offset
+09/29/2022 03:15:00 PM,2,22981,6720,40950,65534,65534,2087,7697,9646,7257,UTC+09:00

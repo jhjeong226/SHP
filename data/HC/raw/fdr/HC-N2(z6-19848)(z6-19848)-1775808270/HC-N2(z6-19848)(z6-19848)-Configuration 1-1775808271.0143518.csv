@@ -1,0 +1,9 @@
+﻿z6-19848,Port7,Port7,Port8,Port8
+# Records: 6,Battery,Battery,Barometer,Barometer
+Timestamps,% Battery Percent, mV Battery Voltage, kPa Reference Pressure, °C Logger Temperature
+08/24/2022 11:15:00 AM,91,7731,96.02,27.2
+08/24/2022 11:30:00 AM,92,7736,96.02,26.6
+08/24/2022 11:45:00 AM,92,7735,95.99,26.1
+08/24/2022 12:00:00 PM,92,7735,95.98,25.9
+08/24/2022 12:15:00 PM,92,7734,96.0,25.7
+08/24/2022 12:30:00 PM,92,7735,96.01,25.5

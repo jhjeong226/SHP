@@ -1,0 +1,4 @@
+﻿z6-05589,Port1,Port1,Port2,Port3,Port3,Port7,Port7,Port8,Port8
+# Records: 1,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,Unrecognized Sensor,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,Battery,Battery,Barometer,Barometer
+Timestamps, m³/m³ Water Content, °C Soil Temperature, Sensor Output, m³/m³ Water Content, °C Soil Temperature,% Battery Percent, mV Battery Voltage, kPa Reference Pressure, °C Logger Temperature
+09/29/2022 03:15:00 PM,0.196,17.2,40950,,,87,7697,96.46,22.6
