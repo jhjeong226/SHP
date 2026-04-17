@@ -16,13 +16,17 @@ preprocessing.fdr 섹션에서 읽어옵니다.
     시트: 10cm / 20cm / 30cm
     컬럼: date, {E1}, {E2}, {N1}, ..., mean
 
-폴더 구조 (입력):
+폴더 구조 (입력) — 두 가지 구조 자동 감지:
+
+  [subfolder 방식 — HC]
   {raw_fdr}/
-  ├── HC-E1(z6-19850)(...)-XXXXXXX/
+  ├── HC-E1(z6-19850)(...)-XXXXXXX/   ← 센서별 하위 폴더
   │   ├── ...-Configuration_1-....csv
   │   └── ...-Configuration_2-....csv
-  ├── HC-N1(z6-05589)(...)-XXXXXXX/
-  ...
+
+  [flat 방식 — PC]
+  {raw_fdr}/
+  ├── z6-25663(S25)(z6-25663)-Configuration 2-XXXXXXX.csv  ← 직접 CSV
 """
 
 from __future__ import annotations
@@ -62,18 +66,36 @@ def _cfg(options: Dict, key: str) -> Any:
 # 내부 헬퍼 함수
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_FOLDER_PATTERN = re.compile(
-    r"^[A-Z]+-([A-Z0-9]+)"   # HC-E1 → group(1) = "E1"
-    r".*?(z6-\d+)",           # (z6-19850) → group(2) = "z6-19850"
+# HC 방식: HC-E1(z6-19850)... 형태의 폴더/파일명
+_FOLDER_PATTERN_HC = re.compile(
+    r"^[A-Z]+-([A-Z0-9]+)"
+    r".*?(z6-\d+)",
+    re.IGNORECASE,
+)
+
+# PC 방식: z6-25663(S25)(z6-25663)... 형태의 폴더/파일명
+_FOLDER_PATTERN_PC = re.compile(
+    r"^(z6-\d+)\(([A-Z0-9]+)\)",
     re.IGNORECASE,
 )
 
 
 def _parse_folder(folder_name: str) -> Tuple[Optional[str], Optional[str]]:
-    """폴더명에서 (site_id, logger_id) 추출. 실패 시 (None, None)."""
-    m = _FOLDER_PATTERN.match(folder_name)
+    """폴더명에서 (site_id, logger_id) 추출. HC/PC 두 패턴 모두 지원."""
+    m = _FOLDER_PATTERN_HC.match(folder_name)
     if m:
         return m.group(1).upper(), m.group(2).lower()
+    m = _FOLDER_PATTERN_PC.match(folder_name)
+    if m:
+        return m.group(2).upper(), m.group(1).lower()
+    return None, None
+
+
+def _parse_flat_filename(file_name: str) -> Tuple[Optional[str], Optional[str]]:
+    """flat 파일명에서 (site_id, logger_id) 추출."""
+    m = _FOLDER_PATTERN_PC.match(file_name)
+    if m:
+        return m.group(2).upper(), m.group(1).lower()
     return None, None
 
 
@@ -230,28 +252,99 @@ class FDRProcessor:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _collect_all_sites(self) -> pd.DataFrame:
-        """센서 하위 폴더를 모두 읽어 Long DataFrame으로 반환."""
+        """
+        입력 폴더 구조를 자동 감지해서 Long DataFrame으로 반환.
+          - CSV 파일이 직접 있으면 → flat 방식 (PC)
+          - 하위 폴더가 있으면    → subfolder 방식 (HC)
+        """
+        has_csv     = any(self.input_dir.glob("*.csv"))
+        has_folders = any(d.is_dir() for d in self.input_dir.iterdir()
+                          if not d.name.startswith("."))
+
+        if has_csv and not has_folders:
+            print(f"\n  📂 flat 방식 감지 (CSV 직접 위치)")
+            return self._collect_flat()
+        elif has_folders:
+            print(f"\n  📂 subfolder 방식 감지")
+            return self._collect_subfolders()
+        else:
+            raise FileNotFoundError(
+                f"CSV 파일 또는 하위 폴더 없음: {self.input_dir}"
+            )
+
+    def _collect_subfolders(self) -> pd.DataFrame:
+        """HC 방식: 센서별 하위 폴더 순회."""
         sensor_folders = sorted([d for d in self.input_dir.iterdir() if d.is_dir()])
-        if not sensor_folders:
-            raise FileNotFoundError(f"센서 하위 폴더 없음: {self.input_dir}")
+        print(f"  발견된 센서 폴더: {len(sensor_folders)}개")
 
-        theta_min = _cfg(self.options, "theta_min")
-        theta_max = _cfg(self.options, "theta_max")
+        sources = []
+        for folder in sensor_folders:
+            parsed = _parse_folder(folder.name)
+            sources.append((folder.name, parsed,
+                             lambda f=folder: _merge_folder(f, self.options)))
+        return self._process_sources(sources)
 
+    def _collect_flat(self) -> pd.DataFrame:
+        """PC 방식: fdr 폴더 내 CSV 파일 직접 순회. 같은 site_id 파일을 묶어 처리."""
+        csv_files = sorted(self.input_dir.glob("*.csv"))
+        print(f"  발견된 CSV 파일: {len(csv_files)}개")
+
+        # site_id 기준으로 파일 묶기
+        sensor_map: Dict[str, Dict] = {}
+        for f in csv_files:
+            site_id, logger_id = _parse_flat_filename(f.name)
+            if site_id is None:
+                print(f"  ⚠️  파일명 파싱 실패 (건너뜀): {f.name}")
+                continue
+            if site_id not in sensor_map:
+                sensor_map[site_id] = {"site_id": site_id,
+                                        "logger_id": logger_id, "files": []}
+            sensor_map[site_id]["files"].append(f)
+
+        sources = []
+        for info in sensor_map.values():
+            files = info["files"]
+            sources.append((
+                info["site_id"],
+                (info["site_id"], info["logger_id"]),
+                lambda fs=files: self._merge_flat_files(fs),
+            ))
+        return self._process_sources(sources)
+
+    def _merge_flat_files(self, files: List[Path]) -> pd.DataFrame:
+        """flat 방식: 같은 센서의 여러 CSV 파일을 읽어 병합."""
+        frames = []
+        for p in sorted(files):
+            try:
+                frames.append(_read_single_csv(p, self.options))
+            except Exception as e:
+                print(f"      ⚠️  {p.name} 읽기 실패: {e}")
+        if not frames:
+            return pd.DataFrame()
+        merged = pd.concat(frames, ignore_index=True)
+        before = len(merged)
+        merged = (merged.drop_duplicates(subset=["timestamp"])
+                  .sort_values("timestamp").reset_index(drop=True))
+        removed = before - len(merged)
+        if removed:
+            print(f"      🔧 중복 제거: {removed:,}행")
+        return merged
+
+    def _process_sources(self, sources) -> pd.DataFrame:
+        """(name, (site_id, logger_id), data_fn) 목록을 처리해 Long DataFrame 반환."""
+        theta_min  = _cfg(self.options, "theta_min")
+        theta_max  = _cfg(self.options, "theta_max")
         depth_keys = ["theta_v_d1", "theta_v_d2", "theta_v_d3"]
         depth_map  = dict(zip(depth_keys, self.depths))
-
-        print(f"\n  발견된 센서 폴더: {len(sensor_folders)}개")
         frames: List[pd.DataFrame] = []
 
-        for folder in sensor_folders:
-            site_id, logger_id = _parse_folder(folder.name)
+        for name, (site_id, logger_id), data_fn in sources:
             if site_id is None:
-                print(f"  ⚠️  폴더명 파싱 실패 (건너뜀): {folder.name}")
+                print(f"  ⚠️  파싱 실패 (건너뜀): {name}")
                 continue
 
             print(f"\n  [{site_id}]  logger={logger_id}")
-            wide = _merge_folder(folder, self.options)
+            wide = data_fn()
             if wide.empty:
                 print(f"    ❌ 유효 데이터 없음, 건너뜀")
                 continue

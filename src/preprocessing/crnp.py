@@ -386,6 +386,13 @@ class CRNPProcessor:
                 cnt = df_copy.groupby("date")[col].count()
                 daily[col] = daily[col].where(cnt >= min_obs)
 
+        # N_uts: UTS 입력용 중성자 (fp·fi만 보정, fw 미적용)
+        # N_uts = N_raw / (fp × fi)  ← 습도 신호 보존 (I_norm 내에서 처리)
+        # Standard의 N_corrected(fw 포함)와 구분
+        if all(c in daily.columns for c in ["N_raw", "fp", "fi"]):
+            daily["N_uts"] = daily["N_raw"] / (daily["fp"] * daily["fi"])
+            daily["N_uts"] = daily["N_uts"].where(daily["N_corrected"].notna())
+
         # 일자료 N_corrected 절대값 필터 (YAML n_daily_min / n_daily_max)
         if n_day_min is not None and "N_corrected" in daily.columns:
             below = (daily["N_corrected"] < n_day_min).sum()
@@ -407,7 +414,7 @@ class CRNPProcessor:
         daily["Aref"] = round(self.Aref, 6) if self.Aref is not None else np.nan
         daily["Iref"] = round(self.Iref, 3) if self.Iref is not None else np.nan
 
-        col_order = ["date", "N_raw", "N_corrected",
+        col_order = ["date", "N_raw", "N_corrected", "N_uts",
                      "Pa", "RH", "Ta", "abs_humidity",
                      "fi", "fp", "fw",
                      "Pref", "Aref", "Iref"]

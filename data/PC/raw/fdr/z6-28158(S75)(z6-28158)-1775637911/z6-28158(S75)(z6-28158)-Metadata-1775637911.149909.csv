@@ -1,0 +1,68 @@
+﻿Configuration,Device Name,z6-28158(S75)
+,Site Name,KIHS
+,Serial Number,37915
+,Device Type,192
+,Firmware Version,215
+,Hardware Version,unknown
+,Measurement Interval,3600
+,,
+Software,Software Version,2.14.85
+,,
+Location,Latitude,37.5306333
+,Longitude,128.4464017
+,Logger Time,2025-02-04 22:02:55.840918+00:00
+,Current Time Zone,UTC+09:00
+,Satellite Vehicles,10
+,GPS Fix Status,7
+,Horizontal Accuracy,1400
+,Altitude,555920
+,,
+Cellular Hardware,SIM Number,8944501211215117753
+,Modem Firmware Version,512
+,Modem Type,10
+,,
+Cellular Configuration,Queue Data,1
+,Allow All Upload Hours,1
+,Unrestricted Measurement Interval,0
+,Four Reports per Hour,0
+,Four Reports per Night,0
+,,
+Radio,Power,
+,Channel,
+,Firmware Version,
+,,
+Sensors,Port #,1
+,Name,TEROS 11 Moisture/Temp
+,Serial Number,T11-00034838
+,Meta,0
+,Value,0
+,Status,1
+,Version,302
+,Coefficient,Mineral
+,,
+,Port #,2
+,Name,TEROS 11 Moisture/Temp
+,Serial Number,T11-00034829
+,Meta,0
+,Value,0
+,Status,1
+,Version,302
+,Coefficient,Mineral
+,,
+,Port #,3
+,Name,TEROS 11 Moisture/Temp
+,Serial Number,T11-00034832
+,Meta,0
+,Value,0
+,Status,1
+,Version,302
+,Coefficient,Mineral
+,,
+,Port #,4
+,Name,Barometer
+,Serial Number,1717693785
+,Meta,1717693785
+,Value,0
+,Status,1
+,Version,100
+,Coefficient,

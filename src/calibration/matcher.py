@@ -68,7 +68,9 @@ class DataMatcher:
 
         Returns
         -------
-        DataFrame  columns: date | theta_field | N_corrected
+        DataFrame  columns: date | theta_field | fdr_avg | N_corrected | Pa | abs_humidity
+          - theta_field : Schron(2017) 거리가중 평균
+          - fdr_avg     : reference_depths 지점 단순 평균 (Desilets_01 방식)
           NaN 행 포함 (날짜는 유지, 값 없으면 NaN)
         """
         print(f"\n{'='*60}")
@@ -85,11 +87,19 @@ class DataMatcher:
         print(f"\n  활성 지점: {sorted(theta_by_site.columns.drop('date'))}  "
               f"({len(theta_by_site.columns) - 1}개)")
 
-        # 3. 거리가중 평균 → θ_field
+        # 3a. 거리가중 평균 → θ_field (Schron 2017)
         theta_field = self._distance_weighted(theta_by_site, crnp_df)
 
-        # 4. CRNP N_corrected 와 join
-        matched = self._join_crnp(theta_field, crnp_df)
+        # 3b. 단순 평균 → fdr_avg
+        site_cols = [c for c in theta_by_site.columns if c != "date"]
+        fdr_avg_df = theta_by_site[["date"]].copy()
+        fdr_avg_df["fdr_avg"] = theta_by_site[site_cols].mean(axis=1)
+
+        # 4. theta_field + fdr_avg 합치기
+        theta_combined = pd.merge(theta_field, fdr_avg_df, on="date", how="outer")
+
+        # 5. CRNP N_corrected 와 join
+        matched = self._join_crnp(theta_combined, crnp_df)
 
         n_valid = matched[["theta_field", "N_corrected"]].notna().all(axis=1).sum()
         print(f"\n  매칭 완료: 전체 {len(matched)}일 / 유효 {n_valid}일")
@@ -134,7 +144,7 @@ class DataMatcher:
         df = pd.read_excel(path, engine="openpyxl")
         df["date"] = pd.to_datetime(df["date"]).dt.date
 
-        need = ["N_corrected"]
+        need = ["N_corrected"]  # N_uts는 있으면 사용, 없어도 무방
         missing = [c for c in need if c not in df.columns]
         if missing:
             raise ValueError(f"CRNP 파일에 필수 컬럼 없음: {missing}")
@@ -253,19 +263,19 @@ class DataMatcher:
     # ─────────────────────────────────────────────────────────────────────────
 
     def _join_crnp(self,
-                   theta_field: pd.DataFrame,
+                   theta_combined: pd.DataFrame,
                    crnp_df: pd.DataFrame) -> pd.DataFrame:
         """
-        theta_field (date | theta_field) 와
-        crnp_df     (date | N_corrected | Pa | abs_humidity | ...) 를 join.
+        theta_combined (date | theta_field | fdr_avg) 와
+        crnp_df        (date | N_corrected | Pa | abs_humidity | ...) 를 join.
 
-        반환: date | theta_field | N_corrected | Pa | abs_humidity
+        반환: date | theta_field | fdr_avg | N_corrected | Pa | abs_humidity
         """
         keep_cols = ["date", "N_corrected"] + [
-            c for c in ["Pa", "abs_humidity"] if c in crnp_df.columns
+            c for c in ["N_uts", "Pa", "abs_humidity"] if c in crnp_df.columns
         ]
         merged = pd.merge(
-            theta_field,
+            theta_combined,
             crnp_df[keep_cols],
             on="date", how="outer",
         ).sort_values("date").reset_index(drop=True)

@@ -1,0 +1,4 @@
+﻿z6-27722,,Port1,Port1,Port2,Port2,Port3,Port7,Port7,Port8,Port8, 
+# Records: 1,,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,TEROS 11 Moisture/Temp,Unrecognized Sensor,Battery,Battery,Barometer,Barometer, 
+Timestamps,Device RID,raw  Water Content,raw  Soil Temperature,raw  Water Content,raw  Soil Temperature,raw  Sensor Output,raw  Battery Percent,raw  Battery Voltage,raw  Reference Pressure,raw  Logger Temperature,UTC Offset
+07/31/2024 07:15:00 AM,4,26370,7713,25991,7447,40480,2086,7685,9453,8182,Not Set

@@ -1,0 +1,4 @@
+﻿z6-28109,,Port7,Port7,Port8,Port8, 
+# Records: 1,,Battery,Battery,Barometer,Barometer, 
+Timestamps,Device RID,raw  Battery Percent,raw  Battery Voltage,raw  Reference Pressure,raw  Logger Temperature,UTC Offset
+08/01/2024 03:45:00 AM,3,2091,7726,9447,8298,Not Set

@@ -12,6 +12,7 @@ DataMatcher → 방법별 Calibrator 순서로 실행.
 """
 
 import argparse
+import pandas as pd
 import sys
 import traceback
 from pathlib import Path
@@ -22,6 +23,8 @@ sys.path.insert(0, str(project_root))
 from src.calibration.matcher  import DataMatcher
 from src.calibration.standard import StandardCalibrator
 from src.calibration.shp_2pt  import SHP2ptCalibrator
+from src.calibration.shp_joint import SHPJointCalibrator
+from src.calibration.uts       import UTSCalibrator
 from src.utils.io import load_config, get_station_paths
 
 
@@ -29,8 +32,10 @@ from src.utils.io import load_config, get_station_paths
 # 방법 레지스트리 (이름 → 클래스)
 # ─────────────────────────────────────────────────────────────────────────────
 METHOD_REGISTRY = {
-    "standard": StandardCalibrator,
-    "shp_2pt":  SHP2ptCalibrator,
+    "standard":  StandardCalibrator,
+    "shp_joint": SHPJointCalibrator,
+    "shp_2pt":   SHP2ptCalibrator,
+    "uts":        UTSCalibrator,
 }
 
 
@@ -57,6 +62,33 @@ def run_station(station_id: str) -> bool:
                                  options=options,
                                  processed_dir=processed_dir)
         matched_df = matcher.run()
+
+        # ── 분석 기간 필터링 (VWC 산출 전체 범위) ───────────────────────
+        cal_opts       = options.get("calibration", {})
+        analysis_start = cal_opts.get("analysis_start", None)
+        analysis_end   = cal_opts.get("analysis_end",   None)
+
+        matched_df["date"] = pd.to_datetime(matched_df["date"])
+        if analysis_start or analysis_end:
+            before = len(matched_df)
+            if analysis_start:
+                matched_df = matched_df[
+                    matched_df["date"] >= pd.to_datetime(analysis_start)
+                ]
+            if analysis_end:
+                matched_df = matched_df[
+                    matched_df["date"] <= pd.to_datetime(analysis_end)
+                ]
+            matched_df = matched_df.reset_index(drop=True)
+            print(f"\n  📅 분석 기간 (VWC 출력): {analysis_start or '전체'} ~ "
+                  f"{analysis_end or '전체'}  ({before}일 → {len(matched_df)}일)")
+
+        # 교정 기간 로그 출력 (실제 필터링은 각 캘리브레이터 내부에서)
+        cal_start = cal_opts.get("calibration_start", None)
+        cal_end   = cal_opts.get("calibration_end",   None)
+        if cal_start or cal_end:
+            print(f"  🔧 교정 기간 (파라미터 결정): "
+                  f"{cal_start or '전체'} ~ {cal_end or '전체'}")
 
         # ── 방법별 교정 ──────────────────────────────────────────────────
         results = {}

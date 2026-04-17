@@ -1,7 +1,8 @@
 station_info:
-  id: "PC"
-  name: "Pyeongchang"
-  description: "평창 서울대 관측소"
+  id: PC
+  name: Pyeongchang Station
+  description: 평창 CRNP 관측소
+  operator: KIHS
 
 coordinates:
   latitude: 37.53126519
@@ -9,30 +10,90 @@ coordinates:
   altitude: 538.2774741
 
 soil_properties:
-  bulk_density: 1.20       # g/cm³
+  bulk_density: 1.2        # g/cm³
   clay_content: 0.35       # fraction
   lattice_water: null      # null이면 clay_content로 자동 계산
 
 sensor_configuration:
-  depths: [10, 30, 60]     # cm
-  fdr_sensor_count: 3
+  depths: [10, 30, 50]     # cm
+  total_sensors: 12
 
 calibration:
-  neutron_monitor: "MXCO"
+  neutron_monitor: MXCO
   utc_offset: 9
-  reference_depths: [10, 30, 60]
-  default_start_date: "2024-09-15"
-  default_end_date:   "2024-10-10"
-  weighting_method: "Schron_2017"
+  reference_depths: [10]
+  weighting_method: Schron_2017
 
 sensors:
-  S1:
-    lat: 37.7049
-    lon: 128.0316
-    distance: 0
-    bulk_density: 1.44
-  S2:
-    lat: 37.7052
-    lon: 128.0320
-    distance: 50
-    bulk_density: 1.44
+  NW100:
+    logger_id: z6-27722
+    lat: 37.531970
+    lon: 128.445501
+    distance: 97.018
+    bulk_density: 1.2
+  NW25:
+    logger_id: z6-28110
+    lat: 37.531436
+    lon: 128.445969
+    distance: 24.770
+    bulk_density: 1.2
+  N50:
+    logger_id: z6-25665
+    lat: 37.531700
+    lon: 128.446001
+    distance: 50.118
+    bulk_density: 1.2
+  N100:
+    logger_id: z6-25666
+    lat: 37.532126
+    lon: 128.445850
+    distance: 99.302
+    bulk_density: 1.2
+  NE50:
+    logger_id: z6-28109
+    lat: 37.531633
+    lon: 128.446479
+    distance: 50.127
+    bulk_density: 1.2
+  NE75:
+    logger_id: z6-28157
+    lat: 37.531818
+    lon: 128.446607
+    distance: 73.517
+    bulk_density: 1.2
+  E50:
+    logger_id: z6-27897
+    lat: 37.531393
+    lon: 128.446679
+    distance: 48.766
+    bulk_density: 1.2
+  S25:
+    logger_id: z6-25663
+    lat: 37.531086
+    lon: 128.446246
+    distance: 21.661
+    bulk_density: 1.2
+  SE75:
+    logger_id: z6-28156
+    lat: 37.530787
+    lon: 128.446735
+    distance: 74.136
+    bulk_density: 1.2
+  SE100:
+    logger_id: z6-28159
+    lat: 37.530634
+    lon: 128.446931
+    distance: 98.360
+    bulk_density: 1.2
+  S75:
+    logger_id: z6-28158
+    lat: 37.530634
+    lon: 128.446387
+    distance: 73.293
+    bulk_density: 1.2
+  SW35:
+    logger_id: z6-25668
+    lat: 37.531004
+    lon: 128.445916
+    distance: 35.654
+    bulk_density: 1.2
