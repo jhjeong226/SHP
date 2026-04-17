@@ -66,3 +66,43 @@ def format_date_axis(ax: plt.Axes, rotation: int = 45) -> None:
     ax.xaxis.set_major_locator(mdates.MonthLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     ax.tick_params(axis="x", rotation=rotation)
+
+
+def plot_scatter(obs: np.ndarray,
+                 pred: np.ndarray,
+                 method: str,
+                 station_id: str,
+                 metrics: dict,
+                 out_path: Path,
+                 dpi: int = 150) -> None:
+    """FDR vs CRNP 산점도 생성"""
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+
+    valid = np.isfinite(obs) & np.isfinite(pred)
+    o, p = obs[valid], pred[valid]
+
+    color = get_color(method)
+    ax.scatter(o, p, color=color, alpha=0.5, s=20, edgecolors="white", lw=0.5)
+
+    # 1:1 line
+    lims = [0, 0.6]
+    ax.plot(lims, lims, color="gray", ls="--", lw=1, zorder=0)
+
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    ax.set_aspect("equal")
+
+    ax.set_xlabel(r"FDR $\theta$ (m³/m³)", fontsize=11)
+    ax.set_ylabel(r"CRNP VWC (m³/m³)", fontsize=11)
+
+    title = f"[{station_id}] {get_label(method)} Scatter\nFDR vs CRNP Soil Moisture"
+    ax.set_title(title, fontsize=12)
+
+    # 통계치 텍스트
+    add_metrics_text(ax, metrics, method, loc="upper left")
+
+    ax.grid(ls="--", alpha=0.3)
+
+    savefig(fig, out_path, dpi=dpi)

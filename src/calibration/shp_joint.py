@@ -336,6 +336,12 @@ class SHPJointCalibrator(BaseCalibrator):
         fig.savefig(p1, dpi=150, bbox_inches="tight")
         plt.close(fig)
         print(f"  📊 {p1.name}")
+
+        # ── 산점도 (Scatter) ───────────────────────────────────────────
+        from src.utils.plotting import plot_scatter
+        p_scat = out_dir / f"{self.station_id}_shp_joint_calibration_scatter.png"
+        plot_scatter(res.obs, res.vwc, "shp_joint", self.station_id, m, p_scat)
+
         return p1
 
 

@@ -609,6 +609,11 @@ class UTSCalibrator(BaseCalibrator):
         plt.close(fig2)
         print(f"  📊 {p2.name}")
 
+        # ── 단일 산점도 (Scatter, best set) ──────────────────────────
+        from src.utils.plotting import plot_scatter
+        p_scat = out_dir / f"{self.station_id}_uts_calibration_scatter.png"
+        plot_scatter(res.obs, res.vwc, "uts", self.station_id, res.metrics, p_scat)
+
         return p1
 
 

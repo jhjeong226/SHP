@@ -423,20 +423,7 @@ class SHP2ptCalibrator(BaseCalibrator):
                 label="CRNP VWC (excluded)", zorder=4)
 
         # 각 슬라이딩 윈도우의 dry/wet 날짜를 연한 수직선으로 표시
-        # (모든 윈도우를 표시하면 복잡하므로 dry는 갈색, wet은 파랑 반투명)
-        wr = res.extra.get("window_results", [])
-        for r in wr:
-            if r.get("theta_dry") is not None and r.get("theta_wet") is not None:
-                ax.axvline(pd.to_datetime(r["window_start"]),
-                           color="saddlebrown", lw=0.5, ls=":", alpha=0.3, zorder=2)
-                ax.axvline(pd.to_datetime(r["window_end"]),
-                           color="navy", lw=0.5, ls=":", alpha=0.3, zorder=2)
-        # 범례용 더미 라인 (첫 번째만)
-        if wr:
-            ax.plot([], [], color="saddlebrown",
-                       lw=0.8, ls=":", alpha=0.5, label="Window start (dry)")
-            ax.plot([], [], color="navy",
-                       lw=0.8, ls=":", alpha=0.5, label="Window end (wet)")
+        # (사용자 요청으로 제거됨)
 
         a2_std = res.extra.get("a2_std", 0)
         n_wins = res.extra.get("n_windows", "?")
@@ -479,6 +466,11 @@ class SHP2ptCalibrator(BaseCalibrator):
         p1 = out_dir / "calibration_timeseries.png"
         fig.savefig(p1, dpi=150, bbox_inches="tight"); plt.close(fig)
         print(f"  📊 [1] {p1.name}")
+
+        # ══ Plot 1-2: 산점도 (Scatter) ════════════════════════════════════
+        from src.utils.plotting import plot_scatter
+        p_scat = out_dir / "calibration_scatter.png"
+        plot_scatter(res.obs, res.vwc, "shp_2pt", self.station_id, m, p_scat)
 
         # ══ Plot 2: a2 분포 (슬라이딩 윈도우 안정성) ═════════════════════
         wr = res.extra.get("window_results", [])
@@ -531,11 +523,11 @@ class SHP2ptCalibrator(BaseCalibrator):
             (res.a2, f"SHP-2pt (a2={res.a2:.4f})",  "tomato", "-"),
         ]:
             N_c = res.N0 * (a0 / (theta_r + a2_v) + a1)
-            ax3.plot(theta_r, N_c, color=col, ls=ls, lw=2.5, label=lbl)
+            ax3.plot(theta_r, N_c, color=col, ls=ls, lw=1.5, label=lbl)
 
         valid = df[df["N_corrected"].notna() & df["theta_field"].notna()]
         ax3.scatter(valid["theta_field"], valid["N_corrected"],
-                    color="steelblue", alpha=0.15, s=10, label="Observations")
+                    color="black", alpha=0.15, s=10, label="Observations")
         ax3.set_xlabel(r"$\theta_{field}$ (m³/m³)", fontsize=11)
         ax3.set_ylabel("N_corrected (counts)", fontsize=11)
         ax3.set_title(
