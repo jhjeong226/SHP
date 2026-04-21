@@ -330,6 +330,12 @@ class SHPJointCalibrator(BaseCalibrator):
         ax_d.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
         ax_d.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         plt.setp(ax_d.xaxis.get_majorticklabels(), rotation=30, ha="right")
+
+        # ── 강수 막대 (보조 오른쪽 Y축, 역방향) ──────────────────────────
+        from src.utils.plotting import add_rain_bars
+        if "rain" in df.columns and df["rain"].notna().any():
+            add_rain_bars(ax, df["date"], df["rain"])
+
         plt.tight_layout()
 
         p1 = out_dir / f"{self.station_id}_shp_joint_calibration_timeseries.png"
@@ -337,7 +343,7 @@ class SHPJointCalibrator(BaseCalibrator):
         plt.close(fig)
         print(f"  📊 {p1.name}")
 
-        # ── 산점도 (Scatter) ───────────────────────────────────────────
+        # ── 산점도 ─────────────────────────────────────────────────────
         from src.utils.plotting import plot_scatter
         p_scat = out_dir / f"{self.station_id}_shp_joint_calibration_scatter.png"
         plot_scatter(res.obs, res.vwc, "shp_joint", self.station_id, m, p_scat)

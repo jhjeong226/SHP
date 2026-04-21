@@ -222,7 +222,7 @@ class UTSCalibrator(BaseCalibrator):
         eval_mask = self._eval_mask(df_v)
 
         if cand_mask.sum() == 0:
-            raise ValueError("유효한 후보 날짜 없음. candidate_start/end 확인.")
+            raise ValueError("유효한 후보 날짜 없음. calibration_start/end 확인.")
         if eval_mask.sum() < 10:
             raise ValueError(f"평가 데이터 부족: {eval_mask.sum()}일")
 
@@ -536,8 +536,9 @@ class UTSCalibrator(BaseCalibrator):
                 ax.axvline(cal_dt, color=color, lw=0.9, ls=":",
                            alpha=0.8, zorder=3)
                 label_text = name.replace("_", "\n")
-                ax.text(cal_dt, 0.57, label_text,
-                        color=color, fontsize=6, ha="center", va="top")
+                ax.text(cal_dt, 0.04, label_text,
+                        color=color, fontsize=6, ha="center", va="bottom",
+                        transform=ax.get_xaxis_transform())
 
         ax.set_ylabel("VWC (m³/m³)", fontsize=11)
         ax.set_ylim(0, 0.6)
@@ -563,6 +564,12 @@ class UTSCalibrator(BaseCalibrator):
         ax_d.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
         ax_d.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         plt.setp(ax_d.xaxis.get_majorticklabels(), rotation=30, ha="right")
+
+        # ── 강수 막대 (보조 오른쪽 Y축, 역방향) ──────────────────────────
+        from src.utils.plotting import add_rain_bars
+        if "rain" in df_v.columns and df_v["rain"].notna().any():
+            add_rain_bars(ax, df_v["date"], df_v["rain"])
+
         plt.tight_layout()
 
         p1 = out_dir / f"{self.station_id}_uts_timeseries.png"
@@ -609,7 +616,7 @@ class UTSCalibrator(BaseCalibrator):
         plt.close(fig2)
         print(f"  📊 {p2.name}")
 
-        # ── 단일 산점도 (Scatter, best set) ──────────────────────────
+        # ── 단일 산점도 (best set) ─────────────────────────────────────
         from src.utils.plotting import plot_scatter
         p_scat = out_dir / f"{self.station_id}_uts_calibration_scatter.png"
         plot_scatter(res.obs, res.vwc, "uts", self.station_id, res.metrics, p_scat)

@@ -25,6 +25,7 @@ from src.calibration.standard import StandardCalibrator
 from src.calibration.shp_2pt  import SHP2ptCalibrator
 from src.calibration.shp_joint import SHPJointCalibrator
 from src.calibration.uts       import UTSCalibrator
+from src.calibration.shp_opt   import SHPOptCalibrator
 from src.utils.io import load_config, get_station_paths
 
 
@@ -36,6 +37,7 @@ METHOD_REGISTRY = {
     "shp_joint": SHPJointCalibrator,
     "shp_2pt":   SHP2ptCalibrator,
     "uts":        UTSCalibrator,
+    "shp_opt":    SHPOptCalibrator,
 }
 
 

@@ -462,12 +462,18 @@ class SHP2ptCalibrator(BaseCalibrator):
         ax_d.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
         ax_d.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         plt.setp(ax_d.xaxis.get_majorticklabels(), rotation=30, ha="right")
+
+        # ── 강수 막대 (보조 오른쪽 Y축, 역방향) ──────────────────────────
+        from src.utils.plotting import add_rain_bars
+        if "rain" in df.columns and df["rain"].notna().any():
+            add_rain_bars(ax, df["date"], df["rain"])
+
         plt.tight_layout()
         p1 = out_dir / "calibration_timeseries.png"
         fig.savefig(p1, dpi=150, bbox_inches="tight"); plt.close(fig)
         print(f"  📊 [1] {p1.name}")
 
-        # ══ Plot 1-2: 산점도 (Scatter) ════════════════════════════════════
+        # ══ Plot 1-2: 산점도 ══════════════════════════════════════════════
         from src.utils.plotting import plot_scatter
         p_scat = out_dir / "calibration_scatter.png"
         plot_scatter(res.obs, res.vwc, "shp_2pt", self.station_id, m, p_scat)
@@ -523,11 +529,11 @@ class SHP2ptCalibrator(BaseCalibrator):
             (res.a2, f"SHP-2pt (a2={res.a2:.4f})",  "tomato", "-"),
         ]:
             N_c = res.N0 * (a0 / (theta_r + a2_v) + a1)
-            ax3.plot(theta_r, N_c, color=col, ls=ls, lw=1.5, label=lbl)
+            ax3.plot(theta_r, N_c, color=col, ls=ls, lw=2.5, label=lbl)
 
         valid = df[df["N_corrected"].notna() & df["theta_field"].notna()]
         ax3.scatter(valid["theta_field"], valid["N_corrected"],
-                    color="black", alpha=0.15, s=10, label="Observations")
+                    color="steelblue", alpha=0.15, s=10, label="Observations")
         ax3.set_xlabel(r"$\theta_{field}$ (m³/m³)", fontsize=11)
         ax3.set_ylabel("N_corrected (counts)", fontsize=11)
         ax3.set_title(

@@ -191,6 +191,9 @@ class CRNPProcessor:
         print("\n[Step 3] 일자료 생성 및 저장")
         out_path = self._step3_daily(df)
 
+        print("\n[Step 4] 강수 데이터 병합")
+        self._step4_merge_rain(out_path)
+
         print(f"\n{'='*60}")
         print(f"  ✅ CRNP 전처리 완료  ─  {self.station_id}")
         print(f"  기간  : {df['timestamp'].min().date()} "
@@ -417,7 +420,7 @@ class CRNPProcessor:
         col_order = ["date", "N_raw", "N_corrected", "N_uts",
                      "Pa", "RH", "Ta", "abs_humidity",
                      "fi", "fp", "fw",
-                     "Pref", "Aref", "Iref"]
+                     "Pref", "Aref", "Iref", "rain"]
         col_order = [c for c in col_order if c in daily.columns]
         daily = daily[col_order]
 
@@ -429,6 +432,83 @@ class CRNPProcessor:
         n_valid = daily["N_corrected"].notna().sum()
         print(f"  ✅ {out_path.name}  ({len(daily)}일 / 유효 {n_valid}일)")
         return out_path
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Step 4: 강수 데이터 병합
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _step4_merge_rain(self, daily_path: Path) -> None:
+        """
+        {station_id}/raw/met/ 폴더의 기상청 시간자료 XLS 파일들을 읽어
+        일강수량(mm)을 CRNP_daily.xlsx에 'rain' 컬럼으로 추가.
+
+        파일 형식 (기상청 기상자료개방포털):
+          탭 구분, cp949 인코딩
+          컬럼: 지점 | 지점명 | 일시 | 기온(°C) | 강수량(mm)
+        """
+        data_root = Path(self.options.get("data_root", "data"))
+        met_dir   = data_root / self.station_id / "raw" / "met"
+
+        if not met_dir.exists():
+            print(f"  ⚠️  met 폴더 없음 ({met_dir}) → rain 컬럼 skip")
+            return
+
+        # .xls, .csv 파일 모두 탐색
+        met_files = sorted(
+            list(met_dir.glob("*.xls")) + list(met_dir.glob("*.csv"))
+        )
+        if not met_files:
+            print(f"  ⚠️  met 파일 없음 ({met_dir}) → rain 컬럼 skip")
+            return
+
+        print(f"  기상 파일: {len(met_files)}개 로드 중...")
+        frames = []
+        for f in met_files:
+            try:
+                df_m = pd.read_csv(f, sep="\t", encoding="cp949")
+                # 컬럼 정규화
+                col_map = {}
+                for c in df_m.columns:
+                    if "일시" in c or "timestamp" in c.lower() or "date" in c.lower():
+                        col_map[c] = "timestamp"
+                    elif "강수" in c or "rain" in c.lower() or "precipitation" in c.lower():
+                        col_map[c] = "rain_mm"
+                df_m = df_m.rename(columns=col_map)
+                if "timestamp" not in df_m.columns or "rain_mm" not in df_m.columns:
+                    print(f"    ⚠️  {f.name}: timestamp/rain_mm 컬럼 미탐지 → skip")
+                    continue
+                df_m["timestamp"] = pd.to_datetime(df_m["timestamp"], errors="coerce")
+                df_m["rain_mm"]   = pd.to_numeric(df_m["rain_mm"], errors="coerce").fillna(0)
+                frames.append(df_m[["timestamp", "rain_mm"]].dropna(subset=["timestamp"]))
+                print(f"    ✅ {f.name}: {len(df_m)}행")
+            except Exception as e:
+                print(f"    ⚠️  {f.name} 읽기 실패: {e}")
+
+        if not frames:
+            print(f"  ⚠️  유효한 강수 데이터 없음 → rain 컬럼 skip")
+            return
+
+        # 일강수량 합산
+        all_rain = pd.concat(frames, ignore_index=True)
+        all_rain["date"] = all_rain["timestamp"].dt.date.astype(str)
+        daily_rain = (
+            all_rain.groupby("date")["rain_mm"]
+            .sum()
+            .reset_index()
+            .rename(columns={"rain_mm": "rain"})
+        )
+
+        # CRNP_daily.xlsx에 rain 컬럼 추가
+        df_daily = pd.read_excel(daily_path, engine="openpyxl")
+        df_daily["date"] = df_daily["date"].astype(str)
+        df_daily = df_daily.merge(daily_rain, on="date", how="left")
+        df_daily["rain"] = df_daily["rain"].fillna(0.0)
+
+        df_daily.to_excel(daily_path, index=False, engine="openpyxl")
+
+        n_rain = (df_daily["rain"] > 0).sum()
+        total  = df_daily["rain"].sum()
+        print(f"  ✅ rain 병합 완료: 강수일 {n_rain}일 / 총 {total:.1f} mm")
 
     # ─────────────────────────────────────────────────────────────────────────
     # 설정값 출력

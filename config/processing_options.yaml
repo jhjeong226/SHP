@@ -1,14 +1,10 @@
 # config/processing_options.yaml
 # ============================================================
 # 전처리 ~ 교정 ~ 산출 전 단계의 공통 설정
-# 경로, 수치 파라미터 모두 여기서 관리
 # ============================================================
 
-# ── 데이터 경로 ──────────────────────────────────────────────
 data_root: "E:/02.Data/05.CRNP/03.SHP_Calibration/SHP/data"
 
-
-# ── FDR 전처리 ───────────────────────────────────────────────
 preprocessing:
   fdr:
     csv_header_rows: 3
@@ -33,47 +29,35 @@ preprocessing:
     n_daily_min: null
     n_daily_max: null
 
-
-# ── 중성자 보정 on/off ───────────────────────────────────────
 corrections:
   incoming_flux: true
   pressure:      true
   humidity:      true
   biomass:       false
 
-
-# ── 교정 ─────────────────────────────────────────────────────
 calibration:
-  methods: ["standard", "shp_joint", "shp_2pt", "uts"]
+  #methods: ["standard", "shp_joint", "shp_2pt", "uts", "shp_opt"]
+  methods: ["shp_opt"]
 
-  # ── 분석 기간 ────────────────────────────────────────────────
-  # VWC를 산출할 전체 기간 (교정 파라미터를 적용해서 출력하는 범위)
-  # null이면 전체 데이터 사용
+  # VWC를 산출할 전체 기간 (null이면 전체 데이터 사용)
   analysis_start: "2025-04-01"
   analysis_end:   "2025-10-31"
 
-  # ── 교정 기간 ────────────────────────────────────────────────
-  # 교정 파라미터(N0, a2, ND)를 결정하는 데 사용하는 기간
-  # 모든 방법 공통 기본값 (방법별로 override 가능)
-  # analysis_start/end 범위 안에 포함되어야 함
+  # 교정 파라미터(N0, a2, ND)를 결정하는 기간 (공통 기본값)
   calibration_start: "2025-04-01"
   calibration_end:   "2025-10-31"
 
-  # 평가 제외 월 — 공통 기본값 (방법별 override 가능)
   # 3월 포함: 결빙이 완전히 해소되지 않은 경우가 많음
   exclude_months: [11, 12, 1, 2, 3]
 
-  # 사용할 FDR 깊이 — 모든 방법 공통
   reference_depths: [10]
 
-  # ── Standard (Desilets 2010) ──────────────────────────────
   standard:
-    # calibration_start/end: null  # null이면 공통 calibration 기간 사용
-    # exclude_months: null         # null이면 공통값 사용
-    rmse_target: "theta_field"     # or "fdr_avg"
+    # calibration_start/end: null  # null이면 공통값 사용
+    # exclude_months: null
+    rmse_target: "theta_field"
     n0_bounds: [300, 5000]
 
-  # ── SHP-Joint ─────────────────────────────────────────────
   shp_joint:
     # calibration_start/end: null
     # exclude_months: null
@@ -81,10 +65,9 @@ calibration:
     a2_bounds: [0.0, 0.5]
     n0_bounds: [300, 5000]
 
-  # ── SHP 2-point ───────────────────────────────────────────
   shp_2pt:
     # calibration_start/end: null
-    # exclude_months: null   # 식생 휴면기만 쓰려면 예: [3,4,5,6,7,8,11,12,1,2]
+    # exclude_months: null   # 식생 휴면기만: [3,4,5,6,7,8,11,12,1,2]
     window_days:     60
     step_days:        7
     dry_percentile:  10
@@ -93,16 +76,46 @@ calibration:
     a2_min: 0.0
     a2_max: 0.5
 
-  # ── UTS ───────────────────────────────────────────────────
+  # ── SHP-Opt (무강우 건조기 이벤트 기반, 최솟값 가설) ─────
+  shp_opt:
+    # calibration_start/end: null  # null이면 공통값 사용
+    # exclude_months: null         # null이면 공통값 사용
+
+    # 계절 격리: 이 월만 허용 (null이면 전체 교정 기간 사용)
+    # 권장: [9, 10] — 낙엽 후 동결 전, DHP_veg 최소 시기
+    season_months: null
+
+    # 강수 데이터 경로 (null이면 matched_df rain 컬럼 → 없으면 단조감소만 적용)
+    rain_path: null
+
+    # ── 이벤트 탐색 ────────────────────────────────────────────
+    # QC 조건 1: 강수 — window 내 rain >= min_rain_mm 이면 폐기
+    # QC 조건 2: 단조감소 — 매일 θ[k] > θ[k+1] 엄격히 감소해야 통과
+    window_days:      10    # Point1(습윤단) → Point2(건조단) 고정 간격 [일]
+    rain_buffer_days: 3    # 강우 종료 후 차단수 안정화 대기 [일]
+    min_rain_mm:      1.0  # 윈도우 폐기 강수 임계값 [mm]
+
+    # ── a2* 선택: 최솟값 가설 ─────────────────────────────────
+    # 전체 후보 a2 분포에서 하위 군집만 True SHP로 인정
+    # 상위값 = DHP 오염(식생 수분, 이슬, 미기록 강우)으로 과대추정
+    # [a2_low_pct ~ a2_high_pct]% 구간의 median → a2*
+    a2_low_pct:  0    # 하위 군집 하한 백분위수
+    a2_high_pct: 20   # 하위 군집 상한 백분위수
+
+    # ── N0* 결정 ──────────────────────────────────────────────
+    # a2* 고정 후 평가 기간 전체 RMSE 최소화 → N0*
+    # (클러스터 이벤트 수가 적어도 안정적 추정 가능)
+
+    min_events: 5  # 최소 유효 이벤트 수 (이하면 ValueError)
+    rmse_target: "theta_field"  # or "fdr_avg"
+
   uts:
     # calibration_start/end: null
     # exclude_months: null
     rmse_target: "theta_field"
     nd_agg: "median"
-    # parameter_sets: null   # null이면 기본값 사용
+    # parameter_sets: null
 
-
-# ── VWC 산출 ─────────────────────────────────────────────────
 calculation:
   exclude_months: [11, 12, 1, 2, 3]
   custom_exclude_dates: []
@@ -111,13 +124,9 @@ calculation:
     window: 11
     order: 3
 
-
-# ── 시각화 ───────────────────────────────────────────────────
 visualization:
   dpi: 150
   figure_size: [18, 12]
 
-
-# ── 로깅 ─────────────────────────────────────────────────────
 logging:
   level: "INFO"

@@ -106,3 +106,37 @@ def plot_scatter(obs: np.ndarray,
     ax.grid(ls="--", alpha=0.3)
 
     savefig(fig, out_path, dpi=dpi)
+
+
+def add_rain_bars(ax_main: plt.Axes,
+                  dates:   "pd.Series",
+                  rain:    "pd.Series",
+                  color:   str = "steelblue",
+                  alpha:   float = 0.5) -> plt.Axes:
+    """
+    시계열 그래프 상단에 강수 막대 추가 (보조 오른쪽 Y축, 역방향).
+
+    Parameters
+    ----------
+    ax_main : 기존 VWC 시계열 ax
+    dates   : datetime series
+    rain    : 일강수량 series (mm)
+    Returns : ax_rain (오른쪽 보조축)
+    """
+    ax_rain = ax_main.twinx()
+    valid = rain.notna() & (rain > 0)
+    if valid.any():
+        ax_rain.bar(dates[valid], rain[valid],
+                    color=color, alpha=alpha, width=1.0,
+                    zorder=2, label="Rain (mm)")
+    # 역방향: 0이 위, 최대값이 아래 → 시각적으로 강수가 아래로 내리는 모양
+    rain_max = max(rain.max() if rain.max() > 0 else 1, 10)
+    ax_rain.set_ylim(rain_max * 4, 0)   # 역축: 상단=0, 하단=max*4 (압축)
+    ax_rain.set_ylabel("Rain (mm)", fontsize=9, color=color)
+    ax_rain.tick_params(axis="y", labelcolor=color, labelsize=8)
+    ax_rain.yaxis.set_label_position("right")
+    ax_rain.yaxis.tick_right()
+    # 강수 없으면 눈금 숨김
+    if not valid.any():
+        ax_rain.set_yticks([])
+    return ax_rain

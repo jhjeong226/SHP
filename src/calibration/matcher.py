@@ -272,7 +272,7 @@ class DataMatcher:
         반환: date | theta_field | fdr_avg | N_corrected | Pa | abs_humidity
         """
         keep_cols = ["date", "N_corrected"] + [
-            c for c in ["N_uts", "Pa", "abs_humidity"] if c in crnp_df.columns
+            c for c in ["N_uts", "Pa", "abs_humidity", "rain"] if c in crnp_df.columns
         ]
         merged = pd.merge(
             theta_combined,

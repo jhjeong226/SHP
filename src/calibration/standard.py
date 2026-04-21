@@ -75,7 +75,7 @@ class StandardCalibrator(BaseCalibrator):
         print(f"\n{'='*60}")
         print(f"  StandardCalibrator  ─  {self.station_id}")
         print(f"  Desilets (2010): a0={_A0}  a1={_A1}  a2={_A2}  (고정)")
-        print(f"  교정 기간  : {self.cal_start or '전체'} ~ {self.cal_end or '전체'} ")
+        print(f"  교정 기간  : {self.cal_start or '전체'} ~ {self.cal_end or '전체'}")
         print(f"  제외 월    : {self.exclude_months}")
         print(f"  RMSE 대상  : {self.rmse_target}")
         print(f"{'='*60}")
@@ -353,6 +353,12 @@ class StandardCalibrator(BaseCalibrator):
         ax_d.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
         ax_d.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         plt.setp(ax_d.xaxis.get_majorticklabels(), rotation=30, ha="right")
+
+        # ── 강수 막대 (보조 오른쪽 Y축, 역방향) ──────────────────────────
+        from src.utils.plotting import add_rain_bars
+        if "rain" in df.columns and df["rain"].notna().any():
+            add_rain_bars(ax, df["date"], df["rain"])
+
         plt.tight_layout()
 
         p1 = out_dir / f"{self.station_id}_standard_calibration_timeseries.png"
@@ -360,7 +366,7 @@ class StandardCalibrator(BaseCalibrator):
         plt.close(fig)
         print(f"  📊 {p1.name}")
 
-        # ── 산점도 (Scatter) ───────────────────────────────────────────
+        # ── 산점도 ─────────────────────────────────────────────────────
         from src.utils.plotting import plot_scatter
         p_scat = out_dir / f"{self.station_id}_standard_calibration_scatter.png"
         plot_scatter(res.obs, res.vwc, "standard", self.station_id, m, p_scat)

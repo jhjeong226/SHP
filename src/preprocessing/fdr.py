@@ -135,8 +135,14 @@ def _read_single_csv(path: Path, options: Dict) -> pd.DataFrame:
 
 
 def _merge_folder(folder: Path, options: Dict) -> pd.DataFrame:
-    """폴더 내 모든 CSV 병합 + 중복 제거 + 시간 정렬."""
-    csv_files = sorted(folder.glob("*.csv"))
+    """폴더 내 -Configuration- 포함 CSV만 병합 + 중복 제거 + 시간 정렬.
+    -Metadata- 등 데이터가 아닌 파일은 자동 제외."""
+    all_csv = sorted(folder.glob("*.csv"))
+    # -Configuration 포함 파일만 읽음 (Metadata, 설정파일 등 제외)
+    csv_files = [f for f in all_csv if "-Configuration" in f.name]
+    if not csv_files:
+        # fallback: Configuration 파일이 없으면 전체 시도
+        csv_files = all_csv
     if not csv_files:
         return pd.DataFrame()
 
