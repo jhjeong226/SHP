@@ -166,20 +166,26 @@ class SHPOptCalibrator(BaseCalibrator):
         # ── 최솟값 가설: 하위 백분위수 군집에서 최종 a2 선택 ────────────
         lo = np.percentile(a2_vals, self.a2_low_pct)
         hi = np.percentile(a2_vals, self.a2_high_pct)
-        cluster = a2_vals[(a2_vals >= lo) & (a2_vals <= hi)]
+        cluster_mask = (a2_vals >= lo) & (a2_vals <= hi)
+        cluster = a2_vals[cluster_mask]
 
         if len(cluster) == 0:
-            cluster = a2_vals[a2_vals <= np.percentile(a2_vals, self.a2_high_pct)]
+            cluster_mask = a2_vals <= np.percentile(a2_vals, self.a2_high_pct)
+            cluster = a2_vals[cluster_mask]
 
         a2_final = float(np.median(cluster))
         print(f"  a2* (하위 {self.a2_low_pct}~{self.a2_high_pct}% 군집, "
               f"n={len(cluster)}): {a2_final:.4f}")
 
-        # ── N0: a2* 고정 후 해석적 역산 (교정 기간 전체) ────────────
-        # Desilets 식: N0 = N / (a0/(θ + a2*) + a1)
-        # 교정 기간 모든 유효 데이터로 N0_i 역산 → median
-        N0_final = self._refit_N0(cal_df, a2_final)
-        print(f"  N0* : {N0_final:.2f}  (a2*={a2_final:.4f} 고정, 해석적 역산)")
+        # ── N0: 동일한 클러스터 이벤트의 N0 median ───────────────────────
+        # 2점 역산에서 (a2_i, N0_i)는 쌍으로 도출됨
+        # a2*를 클러스터 이벤트에서 가져왔으므로 N0*도 같은 이벤트에서 가져와야
+        # 내부 일관성(self-consistency) 유지
+        N0_cluster = N0_vals[cluster_mask]
+        N0_final   = float(np.median(N0_cluster))
+        print(f"  N0* : {N0_final:.2f}  "
+              f"(클러스터 이벤트 {len(N0_cluster)}개의 median, "
+              f"range=[{N0_cluster.min():.1f}, {N0_cluster.max():.1f}])")
 
         # ── 평가 기간 VWC ─────────────────────────────────────────────────
         N_eval   = eval_df["N_corrected"].values.astype(float)
@@ -205,7 +211,8 @@ class SHPOptCalibrator(BaseCalibrator):
                 "a2_all":          a2_vals.tolist(),
                 "a2_low_pct":      self.a2_low_pct,
                 "a2_high_pct":     self.a2_high_pct,
-                "N0_method":        "Analytical inversion, median (a2 fixed)",
+                "N0_cluster":       N0_cluster.tolist(),
+                "N0_method":        "Cluster events median (self-consistent with a2*)",
                 "n_events":        len(events),
                 "n_cluster":       len(cluster),
                 "window_days":     self.window_days,
